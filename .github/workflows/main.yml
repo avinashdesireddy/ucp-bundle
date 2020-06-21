@@ -1,0 +1,43 @@
+name: Build & Release
+on:
+  push:
+    tags: 
+      - 'v*'
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.x
+        uses: action/setup-go@v2
+        with:
+          go-version: ^1.13
+        id: go
+        
+      - name: Check out code into the go module directory
+        uses: actions/checkout@v2
+        
+      - name: Build
+        run: go build -v .
+        
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with: 
+          tag_name: ${{ github.ref }}
+          release_name: UCP Bundle CLI ${{ github.ref }}
+          prerelease: false
+          draft: false
+          
+      - name: Upload Release Addet
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with: 
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./ucp-bundle
+          asset_name: ucp-bundle
