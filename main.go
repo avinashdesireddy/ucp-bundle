@@ -11,8 +11,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/user"
-  "os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -93,44 +93,44 @@ func readInput() (string, string, string, string) {
 	}
 	password := string(bytePassword)
 
-  fmt.Println("")
-  fmt.Print("Context Name: ")
-  contextName, _ := reader.ReadString('\n')
+	fmt.Println("")
+	fmt.Print("Context Name: ")
+	contextName, _ := reader.ReadString('\n')
 	return strings.TrimSpace(ucp_address), strings.TrimSpace(username), strings.TrimSpace(password), strings.TrimSpace(contextName)
 }
 
 /* Adding bundle zip file to docker context */
 func AddBundleToContext(name string, path string) {
-  cmd := exec.Command("docker", "context", "import", name, path)
-  _, err := cmd.CombinedOutput()
-  if err != nil {
-    fmt.Println(err)
-  }
+	cmd := exec.Command("docker", "context", "import", name, path)
+	_, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(err)
+	}
 
-  cmd = exec.Command("docker", "context", "use", name)
-  _, err = cmd.CombinedOutput()
-  if err != nil {
-    fmt.Println(err)
-  }
+	cmd = exec.Command("docker", "context", "use", name)
+	_, err = cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 /**** Main ****/
 func main() {
-  // Read Input
+	// Read Input
 	ucp_address, username, password, contextName := readInput()
-  // Obtain Auth Token
+	// Obtain Auth Token
 	authToken := getUCPAuthToken(strings.TrimSpace(ucp_address), username, password)
-  // Download bundle 
-  // From 
-  // To
-  usr, err := user.Current()
-  if err != nil {
-    fmt.Println(err)
-  }
-  bundlePath := filepath.Join(usr.HomeDir, ".ucp-bundle", fmt.Sprint("ucp-bundle-", username, ".zip"))
-	downloadBundle(ucp_address,authToken, bundlePath)
+	// Download bundle
+	// From
+	// To
+	usr, err := user.Current()
+	if err != nil {
+		fmt.Println(err)
+	}
+	bundlePath := filepath.Join(usr.HomeDir, ".ucp-bundle", fmt.Sprint("ucp-bundle-", username, ".zip"))
+	downloadBundle(ucp_address, authToken, bundlePath)
 
-  // add bundle to docker context
-  fmt.Println("Adding bundle to docker context")
-  AddBundleToContext(contextName, bundlePath)
+	// add bundle to docker context
+	fmt.Println("Adding bundle to docker context")
+	AddBundleToContext(contextName, bundlePath)
 }
