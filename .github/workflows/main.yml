@@ -25,7 +25,7 @@ jobs:
           fi
         
       - name: Build
-        run: go build -v .
+        run: make compile
         
       - name: Create Release
         id: create_release
@@ -38,13 +38,35 @@ jobs:
           prerelease: false
           draft: false
           
-      - name: Upload Release Addet
-        id: upload-release-asset
+      - name: Upload darwin asset
+        id: upload-darwin-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with: 
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./ucp-bundle
-          asset_name: ucp-bundle
+          asset_path: ./ucp-bundle-linux-arm64
+          asset_name: ucp-bundle-linux-arm64
           asset_content_type: application/octet-stream
+      - name: Upload linux asset
+        id: upload-linux-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./ucp-bundle-darwin-arm64
+          asset_name: ucp-bundle-darwin-arm64
+          asset_content_type: application/octet-stream
+      - name: Upload windows binary
+        id: upload-windows-binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./ucp-bundle.exe
+          asset_name: ucp-bundle.exe
+          asset_content_type: application/octet-stream
+
+
