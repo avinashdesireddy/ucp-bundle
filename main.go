@@ -126,8 +126,10 @@ func main() {
 	usr, err := user.Current()
 	if err != nil {
 		fmt.Println(err)
-	}
-	bundlePath := filepath.Join(usr.HomeDir, ".ucp-bundle", fmt.Sprint("ucp-bundle-", username, ".zip"))
+  }
+  bundleBasePath := filepath.Join(usr.HomeDir, ".ucp-bundle", ucp_address)
+  os.MkdirAll(bundleBasePath, 0755)
+	bundlePath := filepath.Join(bundleBasePath, fmt.Sprint(contextName, "-", username, ".zip"))
 	downloadBundle(ucp_address, authToken, bundlePath)
 
 	// add bundle to docker context
