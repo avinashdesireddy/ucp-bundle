@@ -15,7 +15,8 @@ echo ""
 echo "Authenticating with UCP: "
 # use your UCP username and password to acquire a UCP API auth token
 data=$(echo {\"username\": \"$DUSER\" ,\"password\": \"$PASSWORD\" })
-AUTHTOKEN=$(curl -sk -d "${data}" https://${UCP_FQDN}/auth/login | python -c "import sys, json; print json.load(sys.stdin)['auth_token']")
+AUTHTOKEN=$(curl -sk -d "${data}" https://${UCP_FQDN}/auth/login | jq -r .auth_token)
+#AUTHTOKEN=$(curl -sk -d "${data}" https://${UCP_FQDN}/auth/login | python -c "import sys, json; print json.load(sys.stdin)['auth_token']")
 
 # make your life easy by creating a curl alias that automatically uses your auth token:
 alias ucp-api='curl -sk -H "Authorization: Bearer $AUTHTOKEN"'
