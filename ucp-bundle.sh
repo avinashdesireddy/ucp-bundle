@@ -26,8 +26,8 @@ echo "Obtaining clientbundle"
 mkdir -p ~/.docker/${UCP_FQDN}/${DUSER}; cd ~/.docker/${UCP_FQDN}/${DUSER};
 ucp-api https://${UCP_FQDN}/api/clientbundle -o bundle.zip
 unzip -oq bundle.zip
-eval "$(<env.sh)"
-cd ~-
+source env.sh
+cd -
 
 echo "Successful"
 unset DUSER
