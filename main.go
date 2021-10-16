@@ -17,11 +17,26 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
+
+	"github.com/ghodss/yaml"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapilatest "k8s.io/client-go/tools/clientcmd/api/latest"
 )
 
 type Auth struct {
 	Auth_token string
 }
+
+const (
+	DefaultFilePermission = 0664
+)
+
+var (
+	HomeKubeconfig       = clientcmd.RecommendedHomeFile
+	HomeBackupKubeconfig = fmt.Sprintf("%s.bk", HomeKubeconfig)
+	HomeKubeconfigPath   = clientcmd.RecommendedConfigDir
+)
 
 func getUCPAuthToken(ucp_address string, username string, password string) string {
 
@@ -45,7 +60,6 @@ func getUCPAuthToken(ucp_address string, username string, password string) strin
 	}
 
 	defer response.Body.Close()
-
 	data, _ := ioutil.ReadAll(response.Body)
 
 	var auth Auth
@@ -114,7 +128,6 @@ func Unzip(src string, dest string) ([]string, error) {
 		}
 
 		filenames = append(filenames, fpath)
-
 		if f.FileInfo().IsDir() {
 			// Make Folder
 			os.MkdirAll(fpath, os.ModePerm)
@@ -149,8 +162,51 @@ func Unzip(src string, dest string) ([]string, error) {
 	return filenames, nil
 }
 
+func MergeWithHomeKubeconfig(kubePath string) {
+
+	fmt.Println("Merging Kubeconfig...")
+	rules := clientcmd.ClientConfigLoadingRules{
+		Precedence: []string{HomeKubeconfig, kubePath},
+	}
+
+	mergedConfig, _ := rules.Load()
+	json, err := runtime.Encode(clientcmdapilatest.Codec, mergedConfig)
+	if err != nil {
+		fmt.Printf("Unexpected error: %v", err)
+	}
+	output, err := yaml.JSONToYAML(json)
+	if err != nil {
+		fmt.Printf("Unexpected error: %v", err)
+	}
+
+	// Backup Kubeconfig file
+	input, err := ioutil.ReadFile(HomeKubeconfig)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err = ioutil.WriteFile(HomeBackupKubeconfig, input, 0644)
+	if err != nil {
+		fmt.Println("Error creating", HomeBackupKubeconfig)
+		fmt.Println(err)
+		return
+	}
+
+	// Write new config file
+	err = ioutil.WriteFile(HomeKubeconfig, []byte(output), DefaultFilePermission)
+	if err != nil {
+		fmt.Println("Error creating", HomeBackupKubeconfig)
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("Merged Kubeconfig files...")
+}
+
 /**** Main ****/
 func main() {
+
 	// Parse arguments
 	address := flag.String("ucp-url", "", "MKE Url")
 	username := flag.String("ucp-username", "", "MKE Username")
@@ -182,4 +238,7 @@ func main() {
 
 	getBundle(*address, authToken, bundlePath)
 	Unzip(bundlePath, bundleBasePath)
+	MergeWithHomeKubeconfig(filepath.Join(bundleBasePath, "kube.yml"))
+
+	fmt.Println("Use kubectl config use-context CONTEXT_NAME")
 }
